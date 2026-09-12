@@ -190,9 +190,12 @@ function slidePlate(roll, index, direction) {
     return;
   }
 
-  const incoming = document.createElement("img");
-  incoming.src = frameSrc(roll, index);
-  incoming.alt = `${roll.title} frame ${index + 1}`;
+  const incoming = document.createElement("div");
+  incoming.className = "frame-slide";
+  const incomingImg = document.createElement("img");
+  incomingImg.src = frameSrc(roll, index);
+  incomingImg.alt = `${roll.title} frame ${index + 1}`;
+  incoming.appendChild(incomingImg);
 
   const width = stage.clientWidth;
   const startX = new DOMMatrix(getComputedStyle(track).transform).m41;
@@ -221,12 +224,11 @@ function slidePlate(roll, index, direction) {
       if (done) return;
       if (event && event.propertyName && event.propertyName !== "transform") return;
       done = true;
-      [...track.querySelectorAll("img")].forEach((img) => {
-        if (img !== incoming) img.remove();
+      [...track.querySelectorAll(".frame-slide")].forEach((slide) => {
+        if (slide !== incoming) slide.remove();
       });
       track.classList.remove("is-animating");
       track.style.transform = "translateX(0)";
-      incoming.className = "is-current";
       finishQueuedPlate();
     };
 
@@ -234,7 +236,7 @@ function slidePlate(roll, index, direction) {
     window.setTimeout(finish, 620);
   };
 
-  incoming.decode().then(show).catch(show);
+  incomingImg.decode().then(show).catch(show);
 }
 
 function bindSwipe(roll, root = app) {
@@ -312,40 +314,37 @@ function renderPlate(roll, index, root = app) {
   const nextHref = index < total - 1 ? `#/${roll.id}/${current + 1}` : "";
 
   root.innerHTML = `
-    <main class="sheet">
-      ${marks()}
-      <div class="meta-row">
+    <main class="sheet sheet-plate">
+      <div class="plate-chrome plate-top">
         <a class="back" href="#/index">All rolls</a>
         <span>${roll.title} / ${roll.code}</span>
         <span data-plate-label>Plate ${pad(current)} / ${pad(total)}</span>
       </div>
-      <div class="plate-layout">
-        <figure class="frame">
-          ${marks()}
-          <div class="frame-stage">
+      <figure class="frame">
+        <div class="frame-stage">
             <div class="frame-track">
-              <img class="is-current" src="${src}" alt="${roll.title} frame ${current}" />
+              <div class="frame-slide">
+                <img src="${src}" alt="${roll.title} frame ${current}" />
+              </div>
             </div>
+        </div>
+      </figure>
+      <aside class="plate-chrome plate-side">
+        <div class="title-block">
+          <div class="eyebrow">Title block</div>
+          <h2>${roll.title}</h2>
+          <dl class="spec">
+            <dt>Roll</dt><dd>${roll.code}</dd>
+            <dt>Frame</dt><dd data-frame-value>${pad(current)} / ${pad(total)}</dd>
+            <dt>Place</dt><dd>${roll.place}</dd>
+            <dt>File</dt><dd data-file-value>${file.replace(".jpg", "")}</dd>
+          </dl>
+          <div class="nav-row">
+            <button type="button" data-nav="prev" data-go="${prevHref}" ${prevHref ? "" : "disabled"}>Prev</button>
+            <button type="button" data-nav="next" data-go="${nextHref}" ${nextHref ? "" : "disabled"}>Next</button>
           </div>
-        </figure>
-        <aside>
-          <div class="title-block">
-            <div class="eyebrow">Title block</div>
-            <h2>${roll.title}</h2>
-            <dl class="spec">
-              <dt>Roll</dt><dd>${roll.code}</dd>
-              <dt>Frame</dt><dd data-frame-value>${pad(current)} / ${pad(total)}</dd>
-              <dt>Place</dt><dd>${roll.place}</dd>
-              <dt>File</dt><dd data-file-value>${file.replace(".jpg", "")}</dd>
-            </dl>
-            <div class="nav-row">
-              <button type="button" data-nav="prev" data-go="${prevHref}" ${prevHref ? "" : "disabled"}>Prev</button>
-              <button type="button" data-nav="next" data-go="${nextHref}" ${nextHref ? "" : "disabled"}>Next</button>
-            </div>
-          </div>
-          <p class="note">Swipe the plate or use arrows. Esc returns to the roll index.</p>
-        </aside>
-      </div>
+        </div>
+      </aside>
     </main>
   `;
 
