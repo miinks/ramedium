@@ -73,13 +73,34 @@ button:disabled {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 .sheet {
   position: relative;
   min-height: 100vh;
   padding: 28px 32px 40px;
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.42s ease;
 }
+
+.sheet-ghost {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.leave-left { transform: translateX(-22%); opacity: 0; }
+.leave-right { transform: translateX(22%); opacity: 0; }
+.leave-up { transform: translateY(-16px); opacity: 0; }
+.leave-down { transform: translateY(16px); opacity: 0; }
+
+.enter-from-right { transform: translateX(22%); opacity: 0; }
+.enter-from-left { transform: translateX(-22%); opacity: 0; }
+.enter-from-down { transform: translateY(20px); opacity: 0; }
+.enter-from-up { transform: translateY(-20px); opacity: 0; }
 
 .marks {
   position: absolute;
@@ -278,12 +299,39 @@ h1 {
   justify-content: center;
 }
 
-.frame img {
-  display: block;
-  max-width: 100%;
+.frame-stage {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: calc(100vh - 200px);
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+
+.frame-stage.is-dragging {
+  cursor: grabbing;
+}
+
+.frame-track {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: inherit;
+  will-change: transform;
+}
+
+.frame-track.is-animating {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.frame-track img {
+  flex: 0 0 100%;
+  width: 100%;
   max-height: calc(100vh - 200px);
-  width: auto;
   height: auto;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .title-block {
@@ -358,7 +406,11 @@ h1 {
     min-height: 0;
   }
 
-  .frame img {
+  .frame-stage {
+    min-height: 0;
+  }
+
+  .frame-stage img {
     max-height: 68vh;
   }
 

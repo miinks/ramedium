@@ -39,6 +39,12 @@ const ROLLS = [
 ];
 
 const app = document.getElementById("app");
+const IMAGE_VERSION = "v=2";
+
+let plateState = { rollId: null, index: null, swapping: false };
+let queuedPlate = null;
+let viewBusy = false;
+let queuedRoute = null;
 
 function marks() {
   return `<div class="marks" aria-hidden="true"><i class="nw"></i><i class="ne"></i><i class="sw"></i><i class="se"></i></div>`;
@@ -59,9 +65,9 @@ function parseRoute() {
   return { view: "plate", roll, index };
 }
 
-function renderCover() {
+function renderCover(root = app) {
   const frames = ROLLS.reduce((sum, roll) => sum + roll.frames.length, 0);
-  app.innerHTML = `
+  root.innerHTML = `
     <main class="sheet">
       ${marks()}
       <div class="cover">
@@ -87,7 +93,7 @@ function renderCover() {
   `;
 }
 
-function renderIndex() {
+function renderIndex(root = app) {
   const cards = ROLLS.map(
     (roll) => `
       <a class="roll-card" href="#/${roll.id}/1">
@@ -104,7 +110,7 @@ function renderIndex() {
     `,
   ).join("");
 
-  app.innerHTML = `
+  root.innerHTML = `
     <main class="sheet">
       ${marks()}
       <div class="meta-row">
@@ -121,26 +127,206 @@ function renderIndex() {
   `;
 }
 
-function renderPlate(roll, index) {
+function frameSrc(roll, index) {
+  return `web/${roll.id}/${roll.frames[index]}?${IMAGE_VERSION}`;
+}
+
+function bindPlateNav(root = app) {
+  root.querySelectorAll("[data-go]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const href = button.getAttribute("data-go");
+      if (href) location.hash = href;
+    });
+  });
+}
+
+function setPlateMeta(roll, index) {
   const file = roll.frames[index];
-  const src = `web/${roll.id}/${file}?v=2`;
   const current = index + 1;
   const total = roll.frames.length;
   const prevHref = index > 0 ? `#/${roll.id}/${current - 1}` : "";
   const nextHref = index < total - 1 ? `#/${roll.id}/${current + 1}` : "";
 
-  app.innerHTML = `
+  const plateLabel = app.querySelector("[data-plate-label]");
+  const frameValue = app.querySelector("[data-frame-value]");
+  const fileValue = app.querySelector("[data-file-value]");
+  const prevButton = app.querySelector("[data-nav='prev']");
+  const nextButton = app.querySelector("[data-nav='next']");
+
+  if (plateLabel) plateLabel.textContent = `Plate ${pad(current)} / ${pad(total)}`;
+  if (frameValue) frameValue.textContent = `${pad(current)} / ${pad(total)}`;
+  if (fileValue) fileValue.textContent = file.replace(".jpg", "");
+  if (prevButton) {
+    prevButton.dataset.go = prevHref;
+    prevButton.disabled = !prevHref;
+  }
+  if (nextButton) {
+    nextButton.dataset.go = nextHref;
+    nextButton.disabled = !nextHref;
+  }
+}
+
+function preloadNeighbors(roll, index) {
+  [index - 1, index + 1].forEach((neighbor) => {
+    if (neighbor < 0 || neighbor >= roll.frames.length) return;
+    const image = new Image();
+    image.src = frameSrc(roll, neighbor);
+  });
+}
+
+function finishQueuedPlate() {
+  plateState.swapping = false;
+  if (!queuedPlate) return;
+  const next = queuedPlate;
+  queuedPlate = null;
+  updatePlate(next.roll, next.index);
+}
+
+function slidePlate(roll, index, direction) {
+  const stage = app.querySelector(".frame-stage");
+  const track = app.querySelector(".frame-track");
+  if (!stage || !track) {
+    plateState.swapping = false;
+    return;
+  }
+
+  const incoming = document.createElement("img");
+  incoming.src = frameSrc(roll, index);
+  incoming.alt = `${roll.title} frame ${index + 1}`;
+
+  const width = stage.clientWidth;
+  const startX = new DOMMatrix(getComputedStyle(track).transform).m41;
+
+  const show = () => {
+    track.classList.remove("is-animating");
+
+    if (direction > 0) {
+      track.appendChild(incoming);
+      track.style.transform = `translateX(${startX}px)`;
+    } else {
+      track.insertBefore(incoming, track.firstChild);
+      track.style.transform = `translateX(${startX - width}px)`;
+    }
+
+    const endX = direction > 0 ? -width : 0;
+    void track.offsetWidth;
+
+    requestAnimationFrame(() => {
+      track.classList.add("is-animating");
+      track.style.transform = `translateX(${endX}px)`;
+    });
+
+    let done = false;
+    const finish = (event) => {
+      if (done) return;
+      if (event && event.propertyName && event.propertyName !== "transform") return;
+      done = true;
+      [...track.querySelectorAll("img")].forEach((img) => {
+        if (img !== incoming) img.remove();
+      });
+      track.classList.remove("is-animating");
+      track.style.transform = "translateX(0)";
+      incoming.className = "is-current";
+      finishQueuedPlate();
+    };
+
+    track.addEventListener("transitionend", finish);
+    window.setTimeout(finish, 620);
+  };
+
+  incoming.decode().then(show).catch(show);
+}
+
+function bindSwipe(roll, root = app) {
+  const stage = root.querySelector(".frame-stage");
+  const track = root.querySelector(".frame-track");
+  if (!stage || !track) return;
+
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
+  let dx = 0;
+  let locked = null;
+
+  stage.addEventListener("pointerdown", (event) => {
+    if (plateState.swapping || event.button) return;
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    startY = event.clientY;
+    dx = 0;
+    locked = null;
+    stage.setPointerCapture(pointerId);
+  });
+
+  stage.addEventListener("pointermove", (event) => {
+    if (pointerId !== event.pointerId) return;
+    const moveX = event.clientX - startX;
+    const moveY = event.clientY - startY;
+    if (locked === null && Math.hypot(moveX, moveY) < 8) return;
+    if (locked === null) locked = Math.abs(moveX) >= Math.abs(moveY) ? "x" : "y";
+    if (locked !== "x") return;
+
+    dx = moveX;
+    const atStart = plateState.index === 0 && dx > 0;
+    const atEnd = plateState.index === roll.frames.length - 1 && dx < 0;
+    const resisted = atStart || atEnd ? dx * 0.22 : dx;
+    track.classList.remove("is-animating");
+    stage.classList.add("is-dragging");
+    track.style.transform = `translateX(${resisted}px)`;
+  });
+
+  const endDrag = (event) => {
+    if (pointerId !== event.pointerId) return;
+    pointerId = null;
+    stage.classList.remove("is-dragging");
+
+    if (locked !== "x") {
+      dx = 0;
+      return;
+    }
+
+    const threshold = Math.min(72, stage.clientWidth * 0.16);
+    const goNext = dx < -threshold && plateState.index < roll.frames.length - 1;
+    const goPrev = dx > threshold && plateState.index > 0;
+
+    if (goNext || goPrev) {
+      location.hash = `#/${roll.id}/${plateState.index + (goNext ? 2 : 0)}`;
+    } else {
+      track.classList.add("is-animating");
+      track.style.transform = "translateX(0)";
+    }
+    dx = 0;
+    locked = null;
+  };
+
+  stage.addEventListener("pointerup", endDrag);
+  stage.addEventListener("pointercancel", endDrag);
+}
+
+function renderPlate(roll, index, root = app) {
+  const file = roll.frames[index];
+  const src = frameSrc(roll, index);
+  const current = index + 1;
+  const total = roll.frames.length;
+  const prevHref = index > 0 ? `#/${roll.id}/${current - 1}` : "";
+  const nextHref = index < total - 1 ? `#/${roll.id}/${current + 1}` : "";
+
+  root.innerHTML = `
     <main class="sheet">
       ${marks()}
       <div class="meta-row">
         <a class="back" href="#/index">All rolls</a>
         <span>${roll.title} / ${roll.code}</span>
-        <span>Plate ${pad(current)} / ${pad(total)}</span>
+        <span data-plate-label>Plate ${pad(current)} / ${pad(total)}</span>
       </div>
       <div class="plate-layout">
         <figure class="frame">
           ${marks()}
-          <img src="${src}" alt="${roll.title} frame ${current}" />
+          <div class="frame-stage">
+            <div class="frame-track">
+              <img class="is-current" src="${src}" alt="${roll.title} frame ${current}" />
+            </div>
+          </div>
         </figure>
         <aside>
           <div class="title-block">
@@ -148,40 +334,148 @@ function renderPlate(roll, index) {
             <h2>${roll.title}</h2>
             <dl class="spec">
               <dt>Roll</dt><dd>${roll.code}</dd>
-              <dt>Frame</dt><dd>${pad(current)} / ${pad(total)}</dd>
+              <dt>Frame</dt><dd data-frame-value>${pad(current)} / ${pad(total)}</dd>
               <dt>Place</dt><dd>${roll.place}</dd>
-              <dt>File</dt><dd>${file.replace(".jpg", "")}</dd>
+              <dt>File</dt><dd data-file-value>${file.replace(".jpg", "")}</dd>
             </dl>
             <div class="nav-row">
-              <button type="button" data-go="${prevHref}" ${prevHref ? "" : "disabled"}>Prev</button>
-              <button type="button" data-go="${nextHref}" ${nextHref ? "" : "disabled"}>Next</button>
+              <button type="button" data-nav="prev" data-go="${prevHref}" ${prevHref ? "" : "disabled"}>Prev</button>
+              <button type="button" data-nav="next" data-go="${nextHref}" ${nextHref ? "" : "disabled"}>Next</button>
             </div>
           </div>
-          <p class="note">Arrow keys move frames. Esc returns to the roll index.</p>
+          <p class="note">Swipe the plate or use arrows. Esc returns to the roll index.</p>
         </aside>
       </div>
     </main>
   `;
 
-  app.querySelectorAll("[data-go]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const href = button.getAttribute("data-go");
-      if (href) location.hash = href;
-    });
+  bindPlateNav(root);
+  bindSwipe(roll, root);
+  preloadNeighbors(roll, index);
+  plateState = { rollId: roll.id, index, swapping: false };
+}
+
+function updatePlate(roll, index) {
+  if (plateState.index === index) return;
+  if (plateState.swapping) {
+    queuedPlate = { roll, index };
+    return;
+  }
+  const direction = index > plateState.index ? 1 : -1;
+  plateState.index = index;
+  plateState.swapping = true;
+  setPlateMeta(roll, index);
+  slidePlate(roll, index, direction);
+  preloadNeighbors(roll, index);
+}
+
+function currentViewName() {
+  const live = [...app.querySelectorAll(".sheet")].find(
+    (sheet) => !sheet.classList.contains("sheet-ghost"),
+  );
+  if (!live) return null;
+  if (live.querySelector(".cover")) return "cover";
+  if (live.querySelector(".frame-stage")) return "plate";
+  if (live.querySelector(".rolls")) return "index";
+  return null;
+}
+
+function paint(route, root = app) {
+  if (route.view === "cover") {
+    plateState = { rollId: null, index: null, swapping: false };
+    renderCover(root);
+    return;
+  }
+  if (route.view === "plate") {
+    renderPlate(route.roll, route.index, root);
+    return;
+  }
+  plateState = { rollId: null, index: null, swapping: false };
+  renderIndex(root);
+}
+
+function viewMotion(from, to) {
+  if (from === "cover" && to === "index") return { exit: "up", enter: "from-down" };
+  if (from === "index" && to === "cover") return { exit: "down", enter: "from-up" };
+  if (from === "index" && to === "plate") return { exit: "left", enter: "from-right" };
+  if (from === "plate" && to === "index") return { exit: "right", enter: "from-left" };
+  if (from === "plate" && to === "plate") return { exit: "left", enter: "from-right" };
+  return { exit: "left", enter: "from-right" };
+}
+
+function finishViewTransition() {
+  viewBusy = false;
+  if (!queuedRoute) return;
+  queuedRoute = null;
+  render();
+}
+
+function transitionViews(from, route) {
+  const outgoing = [...app.querySelectorAll(".sheet")].find(
+    (sheet) => !sheet.classList.contains("sheet-ghost"),
+  );
+  if (!outgoing) {
+    paint(route);
+    return;
+  }
+
+  viewBusy = true;
+  const motion = viewMotion(from, route.view);
+  const layer = document.createElement("div");
+  paint(route, layer);
+  const incoming = layer.firstElementChild;
+  if (!incoming) {
+    viewBusy = false;
+    return;
+  }
+
+  outgoing.classList.add("sheet-ghost");
+  incoming.classList.add(`enter-${motion.enter}`);
+  app.appendChild(incoming);
+  void incoming.offsetWidth;
+
+  requestAnimationFrame(() => {
+    outgoing.classList.add(`leave-${motion.exit}`);
+    incoming.classList.remove(`enter-${motion.enter}`);
   });
 
-  const nextFile = roll.frames[index + 1];
-  if (nextFile) {
-    const preload = new Image();
-    preload.src = `web/${roll.id}/${nextFile}?v=2`;
-  }
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    outgoing.remove();
+    finishViewTransition();
+  };
+
+  outgoing.addEventListener("transitionend", finish);
+  window.setTimeout(finish, 560);
 }
 
 function render() {
   const route = parseRoute();
-  if (route.view === "cover") renderCover();
-  else if (route.view === "plate") renderPlate(route.roll, route.index);
-  else renderIndex();
+  const livePlate =
+    plateState.rollId === route.roll?.id &&
+    app.querySelector(".frame-stage") &&
+    !app.querySelector(".sheet-ghost");
+
+  if (route.view === "plate" && livePlate) {
+    updatePlate(route.roll, route.index);
+    return;
+  }
+
+  if (viewBusy) {
+    queuedRoute = route;
+    return;
+  }
+
+  const from = currentViewName();
+  if (!from) {
+    paint(route);
+    return;
+  }
+
+  if (from === route.view && route.view !== "plate") return;
+  transitionViews(from, route);
 }
 
 window.addEventListener("hashchange", render);
