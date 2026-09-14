@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f4f2ed;
+  --color-ink: #1c1b18;
+  --color-mute: #6e6a60;
+  --color-line: rgba(28, 27, 24, 0.22);
+  --color-grid: rgba(28, 27, 24, 0.06);
+  --color-accent: #8a3b2a;
+
+  --font-spec: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Instrument Serif", "Times New Roman", serif;
+
+  --ease-sheet: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* The original layout switched at max-width 860px. */
+  --breakpoint-wide: 861px;
+}
+
+@layer base {
+  html,
+  body {
+    min-height: 100%;
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  body {
+    font-family: var(--font-spec);
+    font-size: 13px;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+/*
+ * Motion system. These stay as hand-written CSS rather than utilities because
+ * transform and opacity run on different durations, and the classes are toggled
+ * in a specific order across animation frames.
+ */
+
+.paper-grid {
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--color-grid) 0,
+      var(--color-grid) 1px,
+      transparent 1px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--color-grid) 0,
+      var(--color-grid) 1px,
+      transparent 1px,
+      transparent 40px
+    );
+}
+
+/* Whole-view transitions: cover <-> index <-> plate. */
+
+.sheet {
+  transition:
+    transform 0.5s var(--ease-sheet),
+    opacity 0.42s ease;
+}
+
+.leave-left { transform: translateX(-22%); opacity: 0; }
+.leave-right { transform: translateX(22%); opacity: 0; }
+.leave-up { transform: translateY(-16px); opacity: 0; }
+.leave-down { transform: translateY(16px); opacity: 0; }
+
+.enter-from-right { transform: translateX(22%); opacity: 0; }
+.enter-from-left { transform: translateX(-22%); opacity: 0; }
+.enter-from-down { transform: translateY(20px); opacity: 0; }
+.enter-from-up { transform: translateY(-20px); opacity: 0; }
+
+/* Frame-to-frame transitions inside a roll: slide and crossfade together. */
+
+.frame-stage.is-dragging {
+  cursor: grabbing;
+}
+
+.frame-track {
+  will-change: transform;
+}
+
+.frame-track.is-animating {
+  transition: transform 0.5s var(--ease-sheet);
+}
+
+.frame-slide {
+  transition: opacity 0.42s ease;
+}
+
+.frame-slide.is-entering,
+.frame-slide.is-leaving {
+  opacity: 0;
+}
