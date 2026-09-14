@@ -218,6 +218,7 @@ function slidePlate(roll, index, direction) {
 
   const show = () => {
     track.classList.remove("is-animating");
+    incoming.classList.add("is-entering");
 
     if (direction > 0) {
       track.appendChild(incoming);
@@ -228,14 +229,21 @@ function slidePlate(roll, index, direction) {
     }
 
     const endX = direction > 0 ? -width : 0;
+    const outgoing = [...track.querySelectorAll(".frame-slide")].filter(
+      (slide) => slide !== incoming,
+    );
     void track.offsetWidth;
 
+    let done = false;
+
     requestAnimationFrame(() => {
+      if (done) return;
       track.classList.add("is-animating");
       track.style.transform = `translateX(${endX}px)`;
+      incoming.classList.remove("is-entering");
+      outgoing.forEach((slide) => slide.classList.add("is-leaving"));
     });
 
-    let done = false;
     const finish = (event) => {
       if (done) return;
       if (event && event.propertyName && event.propertyName !== "transform") return;
@@ -243,6 +251,7 @@ function slidePlate(roll, index, direction) {
       [...track.querySelectorAll(".frame-slide")].forEach((slide) => {
         if (slide !== incoming) slide.remove();
       });
+      incoming.classList.remove("is-entering", "is-leaving");
       track.classList.remove("is-animating");
       track.style.transform = "translateX(0)";
       finishQueuedPlate();

@@ -335,6 +335,12 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: opacity 0.42s ease;
+}
+
+.frame-slide.is-entering,
+.frame-slide.is-leaving {
+  opacity: 0;
 }
 
 .frame-slide img {
