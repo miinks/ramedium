@@ -85,7 +85,9 @@
 .enter-from-down { transform: translateY(20px); opacity: 0; }
 .enter-from-up { transform: translateY(-20px); opacity: 0; }
 
-/* Frame-to-frame transitions inside a roll: slide and crossfade together. */
+/* Frame-to-frame transitions inside a roll. The photos sit side by side in the
+ * track rather than stacked, so they slide at full opacity: fading them here
+ * would dissolve both toward the background instead of into each other. */
 
 .frame-stage.is-dragging {
   cursor: grabbing;
@@ -97,13 +99,4 @@
 
 .frame-track.is-animating {
   transition: transform 0.5s var(--ease-sheet);
-}
-
-.frame-slide {
-  transition: opacity 0.42s ease;
-}
-
-.frame-slide.is-entering,
-.frame-slide.is-leaving {
-  opacity: 0;
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { frameSrc, pad } from "../data/rolls";
 import { Marks, MetaRow, Sheet, SHEET_PAD } from "./Sheet";
 
@@ -91,9 +92,8 @@ function FramePlate({ roll, index, ghost, motion }) {
     startSwap(index);
   }, [index, startSwap]);
 
-  // Drive the slide and crossfade imperatively, so the class flips land on the
-  // exact frames they need to. The JSX class names never change, which is what
-  // keeps React from clobbering them on re-render.
+  // Drive the slide imperatively so the transform changes land on the exact
+  // frames they need to.
   useLayoutEffect(() => {
     if (!pending) return undefined;
 
@@ -102,11 +102,6 @@ function FramePlate({ roll, index, ghost, motion }) {
     const incoming = slideEls.current.get(key);
     if (!track || !incoming) return undefined;
 
-    const outgoing = [...slideEls.current.entries()]
-      .filter(([slideKey]) => slideKey !== key)
-      .map(([, el]) => el);
-
-    incoming.classList.add("is-entering");
     track.classList.remove("is-animating");
     track.style.transform = `translateX(${direction > 0 ? startX : startX - width}px)`;
     void track.offsetWidth;
@@ -119,8 +114,6 @@ function FramePlate({ roll, index, ghost, motion }) {
       if (done) return;
       track.classList.add("is-animating");
       track.style.transform = `translateX(${endX}px)`;
-      incoming.classList.remove("is-entering");
-      outgoing.forEach((el) => el.classList.add("is-leaving"));
     });
 
     const finish = (event) => {
@@ -132,12 +125,18 @@ function FramePlate({ roll, index, ghost, motion }) {
       track.removeEventListener("transitionend", finish);
 
       track.classList.remove("is-animating");
+
+      // Dropping the outgoing slide and zeroing the track has to happen in one
+      // synchronous step. Left to a normal state update, the reset lands a
+      // frame before React removes the slide, and that frame shows the
+      // previous photo back at full size.
+      flushSync(() => {
+        setSlides([{ key, i: target }]);
+        setPending(null);
+      });
       track.style.transform = "translateX(0)";
-      incoming.classList.remove("is-entering", "is-leaving");
 
       swappingRef.current = false;
-      setSlides([{ key, i: target }]);
-      setPending(null);
 
       const queued = queuedRef.current;
       queuedRef.current = null;
