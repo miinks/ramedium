@@ -43,6 +43,13 @@ const ROLLS = [
     place: "Italy",
     frames: [],
   },
+  {
+    id: "new-york",
+    code: "04",
+    title: "New York",
+    place: "New York",
+    frames: [],
+  },
 ];
 
 const app = document.getElementById("app");
@@ -88,7 +95,7 @@ function renderCover(root = app) {
         <div class="cover-center">
           <p class="eyebrow">Film photography</p>
           <h1>Ramedium</h1>
-          <p class="lede">Three rolls, kept apart. Iceland, Philippines, and Italy. One frame at a time.</p>
+          <p class="lede">Four rolls, kept apart. Iceland, Philippines, Italy, and New York. One frame at a time.</p>
         </div>
         <div class="cover-foot">
           <div class="stats">
@@ -129,7 +136,7 @@ function renderIndex(root = app) {
       </div>
       <div class="index-head">
         <h2>Rolls</h2>
-        <span class="eyebrow" style="margin:0">Three separate sets</span>
+        <span class="eyebrow" style="margin:0">Four separate sets</span>
       </div>
       <div class="rolls">${cards}</div>
     </main>
@@ -328,7 +335,7 @@ function renderPlate(roll, index, root = app) {
           <h2>${roll.title}</h2>
           <span class="eyebrow" style="margin:0">No frames yet</span>
         </div>
-        <p class="lede">Drop JPEGs in images/rolls/Italy and this set will fill in.</p>
+        <p class="lede">Drop JPEGs in images/rolls/${roll.title} and this set will fill in.</p>
       </main>
     `;
     plateState = { rollId: roll.id, index: 0, swapping: false };
