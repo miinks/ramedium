@@ -36,6 +36,13 @@ const ROLLS = [
       "000039060038.jpg",
     ],
   },
+  {
+    id: "italy",
+    code: "03",
+    title: "Italy",
+    place: "Italy",
+    frames: [],
+  },
 ];
 
 const app = document.getElementById("app");
@@ -61,7 +68,9 @@ function parseRoute() {
   const [rollId, frameRaw] = hash.split("/");
   const roll = ROLLS.find((item) => item.id === rollId);
   if (!roll) return { view: "index" };
-  const index = Math.max(0, Math.min(roll.frames.length - 1, Number(frameRaw || 1) - 1));
+  const index = roll.frames.length
+    ? Math.max(0, Math.min(roll.frames.length - 1, Number(frameRaw || 1) - 1))
+    : 0;
   return { view: "plate", roll, index };
 }
 
@@ -79,7 +88,7 @@ function renderCover(root = app) {
         <div class="cover-center">
           <p class="eyebrow">Film photography</p>
           <h1>Ramedium</h1>
-          <p class="lede">Two rolls, kept apart. Iceland and Philippines. One frame at a time.</p>
+          <p class="lede">Three rolls, kept apart. Iceland, Philippines, and Italy. One frame at a time.</p>
         </div>
         <div class="cover-foot">
           <div class="stats">
@@ -103,7 +112,7 @@ function renderIndex(root = app) {
           <p>${roll.place}</p>
         </div>
         <div class="meta-row">
-          <span>Open plate 01</span>
+          <span>${roll.frames.length ? "Open plate 01" : "No frames yet"}</span>
           <span>${pad(roll.frames.length)} FR</span>
         </div>
       </a>
@@ -120,7 +129,7 @@ function renderIndex(root = app) {
       </div>
       <div class="index-head">
         <h2>Rolls</h2>
-        <span class="eyebrow" style="margin:0">Two separate sets</span>
+        <span class="eyebrow" style="margin:0">Three separate sets</span>
       </div>
       <div class="rolls">${cards}</div>
     </main>
@@ -306,6 +315,26 @@ function bindSwipe(roll, root = app) {
 }
 
 function renderPlate(roll, index, root = app) {
+  if (!roll.frames.length) {
+    root.innerHTML = `
+      <main class="sheet">
+        ${marks()}
+        <div class="meta-row">
+          <a class="back" href="#/index">All rolls</a>
+          <span>${roll.title} / ${roll.code}</span>
+          <span>Plate 00 / 00</span>
+        </div>
+        <div class="index-head">
+          <h2>${roll.title}</h2>
+          <span class="eyebrow" style="margin:0">No frames yet</span>
+        </div>
+        <p class="lede">Drop JPEGs in images/rolls/Italy and this set will fill in.</p>
+      </main>
+    `;
+    plateState = { rollId: roll.id, index: 0, swapping: false };
+    return;
+  }
+
   const file = roll.frames[index];
   const src = frameSrc(roll, index);
   const current = index + 1;

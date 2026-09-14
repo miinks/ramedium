@@ -243,8 +243,8 @@ h1 {
 }
 
 .rolls {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
 }
 
@@ -460,10 +460,6 @@ h1 {
 @media (max-width: 860px) {
   .sheet:not(.sheet-plate) {
     padding: 20px 16px 32px;
-  }
-
-  .rolls {
-    grid-template-columns: 1fr;
   }
 
   .sheet-plate {
