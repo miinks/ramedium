@@ -41,7 +41,13 @@ export const ROLLS = [
     code: "03",
     title: "Italy",
     place: "Italy",
-    frames: [],
+    frames: [
+      "DSCF6073.jpg",
+      "DSCF6092.jpg",
+      "DSCF6100.jpg",
+      "DSCF6102.jpg",
+      "DSCF6193.jpg",
+    ],
   },
   {
     id: "new-york",
