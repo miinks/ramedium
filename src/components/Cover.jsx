@@ -31,8 +31,8 @@ export default function Cover({ ghost, motion }) {
             Ramedium
           </h1>
           <p className="max-w-[36ch] text-[15px] text-mute">
-            Four rolls, kept apart. Iceland, Philippines, Italy, and New York. One frame at a
-            time.
+            Five rolls, kept apart. Iceland, Philippines, Italy, New York, and Untitled. One
+            frame at a time.
           </p>
         </div>
 

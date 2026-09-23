@@ -50,6 +50,13 @@ export const ROLLS = [
     place: "New York",
     frames: [],
   },
+  {
+    id: "untitled",
+    code: "05",
+    title: "Untitled",
+    place: "Untitled",
+    frames: [],
+  },
 ];
 
 const IMAGE_VERSION = "v=2";

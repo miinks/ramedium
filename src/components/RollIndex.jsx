@@ -40,7 +40,7 @@ export default function RollIndex({ ghost, motion }) {
       <div className="mt-7 mb-9 flex items-baseline justify-between">
         <h2 className="font-display text-[42px] font-normal">Rolls</h2>
         <span className="text-[11px] tracking-[0.14em] text-mute uppercase">
-          Four separate sets
+          Five separate sets
         </span>
       </div>
 
