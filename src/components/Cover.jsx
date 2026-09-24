@@ -41,12 +41,20 @@ export default function Cover({ ghost, motion }) {
             <Stat value={pad(ROLLS.length)} label="Rolls" />
             <Stat value={pad(frames)} label="Frames" />
           </div>
-          <a
-            className="border border-ink px-4 py-2.5 text-[11px] tracking-[0.12em] uppercase hover:bg-ink hover:text-paper"
-            href="#/index"
-          >
-            Enter rolls
-          </a>
+          <div className="flex gap-3">
+            <a
+              className="border border-line px-4 py-2.5 text-[11px] tracking-[0.12em] uppercase hover:border-ink"
+              href="#/about"
+            >
+              About
+            </a>
+            <a
+              className="border border-ink px-4 py-2.5 text-[11px] tracking-[0.12em] uppercase hover:bg-ink hover:text-paper"
+              href="#/index"
+            >
+              Enter rolls
+            </a>
+          </div>
         </div>
       </div>
     </Sheet>

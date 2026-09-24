@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState } from "react";
+import About from "./components/About";
 import Cover from "./components/Cover";
 import Plate from "./components/Plate";
 import RollIndex from "./components/RollIndex";
@@ -19,6 +20,10 @@ function routeKey(route) {
 function viewMotion(from, to) {
   if (from === "cover" && to === "index") return { exit: "up", enter: "from-down" };
   if (from === "index" && to === "cover") return { exit: "down", enter: "from-up" };
+  if (from === "cover" && to === "about") return { exit: "up", enter: "from-down" };
+  if (from === "about" && to === "cover") return { exit: "down", enter: "from-up" };
+  if (from === "index" && to === "about") return { exit: "left", enter: "from-right" };
+  if (from === "about" && to === "index") return { exit: "right", enter: "from-left" };
   if (from === "index" && to === "plate") return { exit: "left", enter: "from-right" };
   if (from === "plate" && to === "index") return { exit: "right", enter: "from-left" };
   if (from === "plate" && to === "plate") return { exit: "left", enter: "from-right" };
@@ -27,6 +32,7 @@ function viewMotion(from, to) {
 
 function View({ route, ghost, motion }) {
   if (route.view === "cover") return <Cover ghost={ghost} motion={motion} />;
+  if (route.view === "about") return <About ghost={ghost} motion={motion} />;
   if (route.view === "plate") {
     return <Plate roll={route.roll} index={route.index} ghost={ghost} motion={motion} />;
   }

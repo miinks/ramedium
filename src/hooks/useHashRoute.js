@@ -5,6 +5,7 @@ export function parseRoute(hash = window.location.hash) {
   const path = hash.replace(/^#\/?/, "");
   if (!path) return { view: "cover" };
   if (path === "index") return { view: "index" };
+  if (path === "about") return { view: "about" };
 
   const [rollId, frameRaw] = path.split("/");
   const roll = ROLLS.find((item) => item.id === rollId);

@@ -27,12 +27,20 @@ export default function RollIndex({ ghost, motion }) {
     <Sheet ghost={ghost} motion={motion} className={SHEET_PAD}>
       <Marks />
       <MetaRow>
-        <a
-          className="border border-line px-2.5 py-2 text-[10px] tracking-[0.08em] uppercase hover:border-ink"
-          href="#/"
-        >
-          Cover
-        </a>
+        <span className="flex gap-2">
+          <a
+            className="border border-line px-2.5 py-2 text-[10px] tracking-[0.08em] uppercase hover:border-ink"
+            href="#/"
+          >
+            Cover
+          </a>
+          <a
+            className="border border-line px-2.5 py-2 text-[10px] tracking-[0.08em] uppercase hover:border-ink"
+            href="#/about"
+          >
+            About
+          </a>
+        </span>
         <span>Ramedium / Film archive</span>
         <span>Sheet 01</span>
       </MetaRow>
