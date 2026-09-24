@@ -4,7 +4,7 @@
  */
 
 export const ABOUT = {
-  name: "Jr Agustin",
+  name: "Regie Agustin",
   role: "Film photography",
 
   bio: [
@@ -22,10 +22,9 @@ export const ABOUT = {
     // { label: "LinkedIn", href: "https://linkedin.com/in/…" },
   ],
 
-  // TODO: correct these to the bodies and stocks you actually shoot.
   gear: [
-    { term: "Film", detail: "35mm, lab scanned" },
-    { term: "Digital", detail: "Fujifilm X-series" },
+    { term: "Film", detail: "Canon AE-1, 35mm" },
+    { term: "Digital", detail: "Fujifilm X100VI" },
     { term: "Approach", detail: "Available light, no staging" },
   ],
 
