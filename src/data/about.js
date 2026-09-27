@@ -5,18 +5,19 @@
 
 export const ABOUT = {
   name: "Regie Agustin",
-  role: "Film photography",
+  role: "Photography & computer science",
 
   bio: [
-    "I shoot 35mm and carry a digital body for the frames that will not wait. Ramedium is where those rolls end up: kept apart, one set per place, so each trip reads the way it was shot rather than blending into a single feed.",
-    "The archive covers Iceland, the Philippines, Italy, and New York. I scan the negatives, sequence each roll by frame number, and leave them in shooting order.",
+    "I study computer science and shoot film. Both are about systems: what you keep, what you throw away, and how a sequence of small decisions becomes something someone else can read. A roll of 35mm is a dataset I cannot shuffle later. Building the archive that holds it is the other half of the work.",
+    "Ramedium is that archive. I scan the negatives, keep each place on its own roll, and sequence frames in shooting order. The site is a React app I wrote so the pictures would stay as quiet as the contact sheet, with the same care I try to bring to interfaces and data.",
+    "I am also building a real-time airplane tracker: live flight positions on a map, updated as the planes move. It is the same instinct as photography, pointed at a different stream. One medium freezes a moment. The other has to keep up with it.",
   ],
 
-  // TODO: swap in the address you want employers to use.
-  email: "",
+  email: "agustinreyregie@gmail.com",
 
   links: [
     { label: "GitHub", href: "https://github.com/miinks" },
+    { label: "Flight tracker", href: "https://github.com/miinks/Meridian" },
     // TODO: add your own, e.g.
     // { label: "Instagram", href: "https://instagram.com/…" },
     // { label: "LinkedIn", href: "https://linkedin.com/in/…" },
